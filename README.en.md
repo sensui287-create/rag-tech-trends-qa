@@ -1,4 +1,4 @@
-# LongChain
+# 🚀 TechPulse-RAG: A RAG-Powered Intelligent Q&A System for Tech Trends
 
 [中文文档](README.md) · [API](docs/API.md) · [Experiments](docs/EXPERIMENTS.md) · [Archive inventory](docs/ARCHIVE.md) · [Publishing](docs/PUBLISHING.md)
 
