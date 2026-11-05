@@ -1,0 +1,32 @@
+name: Feature request / 功能建议
+description: 说明实际使用场景和可验证的改进目标。
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先查看已有建议。不要在公开内容中包含凭据、个人信息或未授权分享的数据。
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景与问题
+      description: 当前行为给你带来了什么具体限制？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议的行为
+      description: 描述希望新增或改变的功能，可提供简短的输入、输出或使用流程示例。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收方式
+      description: 如何判断该功能已经解决问题？如涉及效果或性能，请说明数据、模型和评估条件。
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案与相关信息
+      description: 可说明已尝试的做法、兼容性需求或相关 issue。

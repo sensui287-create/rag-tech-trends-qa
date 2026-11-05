@@ -1,0 +1,53 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python, editors, environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+# The source ZIP embeds this generated checksum manifest; do not commit it.
+/ARCHIVE_MANIFEST.json
+
+# Downloaded model weights and generated retrieval indexes
+/backend/models/
+/backend/chroma_db*/
+/backend/bm25_index*.pkl
+/data/
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.sqlite3
+*.sqlite3-*
+*.pkl
+
+# Original corpora, experiment outputs, local notes and backups.
+# Public, synthetic examples live in examples/data/ instead.
+/backend/*.csv
+/backend/*.json
+/backend/*.pdf
+/backend/*.svg
+/backend/*.txt
+*.zip
+*.log
+*.tmp
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini

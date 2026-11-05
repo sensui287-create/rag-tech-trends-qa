@@ -1,0 +1,5 @@
+-r requirements-research.txt
+
+# Optional dependencies for historical reference code, not the active service.
+matplotlib>=3.8,<4
+langchain-tavily>=0.2,<1

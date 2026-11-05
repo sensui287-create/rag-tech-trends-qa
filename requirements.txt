@@ -1,0 +1,22 @@
+# Python 3.11 recommended. Compatible major-version ranges, not a lockfile.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+pydantic>=2.9,<3
+python-dotenv>=1.0,<2
+langchain-core>=1.0,<2
+langchain-community>=0.4,<0.5
+langchain-classic>=1.0,<2
+langchain-text-splitters>=1.0,<2
+langchain-chroma>=1.0,<2
+langchain-ollama>=1.0,<2
+langgraph>=1.0,<2
+dashscope>=1.20,<2
+pandas>=2.2,<3
+numpy>=1.26,<3
+jieba>=0.42.1,<1
+rank-bm25>=0.2.2,<1
+tiktoken>=0.8,<1
+torch>=2.2,<3
+sentence-transformers>=3.0,<6
+transformers>=4.44,<5
+sentencepiece>=0.2,<1

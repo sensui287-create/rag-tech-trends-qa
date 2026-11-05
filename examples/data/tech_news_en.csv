@@ -1,0 +1,6 @@
+en-demo-1,Demo retrieval system,This demonstration retrieves documents before writing an answer. These records were written for this project as synthetic examples.,2026-01-01,https://example.org/demo/retrieval
+en-demo-2,Keyword retrieval,Keyword retrieval matches terms in documents. This demonstration uses BM25 for keyword retrieval.,2026-01-02,https://example.org/demo/bm25
+en-demo-3,Vector retrieval,Vector retrieval compares embeddings of queries and documents. A local Ollama service produces the embeddings in this demonstration.,2026-01-03,https://example.org/demo/vectors
+en-demo-4,Hybrid retrieval,Hybrid retrieval combines keyword and vector rankings. A reranker then selects documents relevant to the current question.,2026-01-04,https://example.org/demo/hybrid
+en-demo-5,Research planning,Complex questions are split into steps. Candidate documents are reranked for each subquestion before summaries and cited answers are generated.,2026-01-05,https://example.org/demo/planning
+en-demo-6,Data and caches,Use a fresh index directory after changing the document corpus. Demo records check installation and do not measure retrieval quality.,2026-01-06,https://example.org/demo/data

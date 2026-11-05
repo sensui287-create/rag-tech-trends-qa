@@ -1,0 +1,6 @@
+zh-demo-1,演示检索系统,本演示系统先从文档库检索资料再生成回答。所有内容均为项目自编的示例文本。,2026-01-01,https://example.org/demo/retrieval
+zh-demo-2,关键词检索,关键词检索通过词语匹配寻找文档。本演示使用 BM25 作为关键词检索方法。,2026-01-02,https://example.org/demo/bm25
+zh-demo-3,向量检索,向量检索把问题与文档编码为向量并比较相似度。本演示由本地 Ollama 服务生成嵌入向量。,2026-01-03,https://example.org/demo/vectors
+zh-demo-4,混合检索,混合检索融合关键词检索和向量检索的排序。重排模型随后筛选与当前问题相关的文档。,2026-01-04,https://example.org/demo/hybrid
+zh-demo-5,复杂问题处理,复杂问题先拆解为研究步骤。系统收集候选资料并按子问题重排，然后提炼摘要与生成带来源编号的回答。,2026-01-05,https://example.org/demo/planning
+zh-demo-6,数据与缓存,文档改变后应使用新的索引目录。演示数据用于验证安装流程，不用于衡量检索质量。,2026-01-06,https://example.org/demo/data

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "demo-retrieval-1",
+    "query": "演示系统使用什么关键词检索方法？",
+    "golden_doc_id": "zh_zh-demo-2",
+    "subset": "synthetic_demo"
+  },
+  {
+    "id": "demo-retrieval-2",
+    "query": "演示系统通过什么本地服务生成嵌入向量？",
+    "golden_doc_id": "zh_zh-demo-3",
+    "subset": "synthetic_demo"
+  }
+]

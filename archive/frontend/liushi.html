@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepThink AI</title>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked, DOMPurify, Highlight.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Day.js for formatting dates -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
+    <style>
+        /* 字体优化 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        /* Markdown 样式增强 */
+        .prose h1, .prose h2, .prose h3 { color: #1e293b; font-weight: 600; margin-top: 1.2em; margin-bottom: 0.6em; }
+        .prose p { margin-bottom: 0.8em; line-height: 1.75; color: #334155; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose strong { color: #4f46e5; font-weight: 600; }
+        .prose blockquote { border-left: 4px solid #6366f1; background: #f8fafc; padding: 0.5em 1em; border-radius: 4px; color: #64748b; }
+        .prose code { background-color: #f1f5f9; color: #ef4444; padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        .prose pre { background: #1e293b; padding: 1em; border-radius: 8px; overflow-x: auto; margin-bottom: 1em; }
+        .prose pre code { background-color: transparent; color: inherit; padding: 0; }
+        .prose a { color: #4f46e5; text-decoration: underline; cursor: pointer; }
+
+        /* 打字机光标 */
+        .typing-cursor::after {
+            content: '▋';
+            color: #4f46e5;
+            animation: blink 1s step-start infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* 自定义滚动条 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* 隐藏侧边栏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 动画 */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-white h-screen flex overflow-hidden text-slate-700">
+
+<div id="app" class="flex w-full h-full">
+
+    <!-- === 左侧边栏 (模仿 DeepSeek/ChatGPT) === -->
+    <aside :class="['bg-slate-50 border-r border-slate-200 flex-col transition-all duration-300 z-30', isSidebarOpen ? 'w-64 flex' : 'w-0 hidden md:flex md:w-0 overflow-hidden']">
+
+        <!-- 新建对话按钮 -->
+        <div class="p-4">
+            <button @click="startNewChat" class="w-full flex items-center gap-3 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors shadow-sm group">
+                <i class="ph ph-plus text-lg group-hover:scale-110 transition-transform"></i>
+                <span class="font-medium text-sm">开启新对话</span>
+            </button>
+        </div>
+
+        <!-- 历史记录列表 -->
+        <div class="flex-1 overflow-y-auto no-scrollbar px-3 pb-4">
+            <div v-if="historySessions.length === 0" class="text-center mt-10 text-xs text-slate-400">
+                <i class="ph ph-clock-counter-clockwise text-2xl mb-2"></i>
+                <p>暂无历史记录</p>
+            </div>
+
+            <!-- 分类显示 (今天/昨天/更早) - 简化为直接列表 -->
+            <div class="space-y-1">
+                <p v-if="historySessions.length > 0" class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">最近对话</p>
+
+                <div v-for="session in historySessions" :key="session.id"
+                     @click="loadSession(session.id)"
+                     class="group flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer transition-colors relative"
+                     :class="currentSessionId === session.id ? 'bg-slate-200/60' : 'hover:bg-slate-100'">
+
+                    <i class="ph ph-chat-circle-text text-slate-500 text-lg"></i>
+                    <div class="flex-1 overflow-hidden">
+                        <h4 class="text-sm text-slate-700 truncate font-medium">{{ session.title || '新对话' }}</h4>
+                        <p class="text-[10px] text-slate-400">{{ formatTime(session.timestamp) }}</p>
+                    </div>
+
+                    <!-- 删除按钮 (Hover显示) -->
+                    <button @click.stop="deleteSession(session.id)" class="absolute right-2 opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-300 rounded text-slate-500 transition-all">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部用户信息 -->
+        <div class="p-4 border-t border-slate-200">
+            <div class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">U</div>
+                <div class="flex-1">
+                    <p class="text-xs font-bold text-slate-700">User Account</p>
+                    <p class="text-[10px] text-slate-400">Pro Plan</p>
+                </div>
+                <i class="ph ph-gear text-slate-400"></i>
+            </div>
+        </div>
+    </aside>
+
+
+    <!-- === 主内容区域 === -->
+    <main class="flex-1 flex flex-col h-full relative bg-white">
+
+        <!-- 顶部导航栏 (移动端显示菜单按钮，桌面端显示模型信息) -->
+        <header class="h-14 flex items-center justify-between px-4 border-b border-slate-100 bg-white/80 backdrop-blur-sm z-20 absolute top-0 w-full">
+            <div class="flex items-center gap-3">
+                <button @click="isSidebarOpen = !isSidebarOpen" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                    <i class="ph ph-sidebar text-xl"></i>
+                </button>
+                <div class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50 px-2 py-1 rounded-lg transition-colors">
+                    <span>DeepThink RAG</span>
+                    <i class="ph ph-caret-down text-xs text-slate-400"></i>
+                </div>
+            </div>
+
+            <div v-if="loading" class="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full animate-pulse">
+                <i class="ph ph-spinner animate-spin"></i>
+                <span>{{ currentStatus || '思考中...' }}</span>
+            </div>
+        </header>
+
+        <!-- 聊天滚动区域 -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar pt-16 pb-32 scroll-smooth" ref="chatBox">
+
+            <!-- 1. 空状态 (类似通义/DeepSeek首页) -->
+            <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center px-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mb-6 text-white">
+                    <i class="ph ph-brain text-4xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800 mb-2">我是科技动向信息智能问答助手</h1>
+                <p class="text-slate-500 text-sm mb-10">基于多智能体协同的深度思考 RAG 助手</p>
+
+                <!-- 快捷卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                    <button v-for="(suggestion, idx) in suggestions" :key="idx"
+                            @click="setInput(suggestion.text)"
+                            class="text-left p-4 bg-slate-50 border border-slate-100 rounded-xl hover:border-indigo-300 hover:bg-white hover:shadow-md transition-all group">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-700 text-sm mb-1">{{ suggestion.title }}</h3>
+                                <p class="text-xs text-slate-400 line-clamp-1">{{ suggestion.desc }}</p>
+                            </div>
+                            <i :class="[suggestion.icon, 'text-slate-400 group-hover:text-indigo-500 transition-colors text-lg']"></i>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 消息列表 -->
+            <div v-else class="max-w-3xl mx-auto px-4 space-y-8 py-6">
+                <div v-for="(msg, idx) in messages" :key="idx" class="group animate-fade-in">
+
+                    <!-- 用户消息 -->
+                    <div v-if="msg.role === 'user'" class="flex justify-end">
+                        <div class="bg-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm max-w-[85%] shadow-sm text-sm md:text-base leading-relaxed">
+                            {{ msg.content }}
+                        </div>
+                    </div>
+
+                    <!-- AI 消息 -->
+                    <div v-else class="flex gap-4">
+                        <div class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm mt-1">
+                            <i class="ph ph-robot text-indigo-600 text-lg"></i>
+                        </div>
+
+                        <div class="flex-1 min-w-0 space-y-3">
+                            <p class="text-xs font-bold text-slate-700 ml-1">DeepThink</p>
+
+                           <!-- 思考过程 (折叠式) -->
+                        <div v-if="msg.thoughts && msg.thoughts.length > 0" class="mb-4 rounded-lg border border-indigo-100 bg-indigo-50/50 overflow-hidden">
+                            <!-- 标题栏：点击可折叠 -->
+                            <div @click="msg.isThinkingExpanded = !msg.isThinkingExpanded"
+                                 class="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-indigo-100/50 transition-colors select-none">
+                                <div class="flex items-center gap-2 text-xs text-indigo-600 font-medium">
+                                    <i class="ph ph-cpu text-lg" :class="{'animate-pulse': loading && idx === messages.length -1}"></i>
+                                    <span>深度思考链 ({{ msg.thoughts.length }} 步)</span>
+                                </div>
+                                <i class="ph ph-caret-down text-indigo-400 transition-transform duration-200 text-xs" :class="{'rotate-180': msg.isThinkingExpanded}"></i>
+                            </div>
+
+                        <!-- 内容区：使用 v-show 控制显示/隐藏 -->
+                        <div v-show="msg.isThinkingExpanded" class="px-4 py-3 bg-white/50 space-y-4 border-t border-indigo-100">
+                            <div v-for="(step, sIdx) in msg.thoughts" :key="sIdx" class="relative pl-4 border-l-2 border-indigo-200 animate-fade-in">
+                                <!-- 节点标题与时间 -->
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full text-white shadow-sm" :class="getNodeColor(step.node)">
+                                        {{ formatNodeName(step.node) }}
+                                    </span>
+                                    <span v-if="step.details.docs_count" class="text-[10px] text-slate-400 flex items-center gap-1">
+                                        <i class="ph ph-files"></i> {{ step.details.docs_count }} 篇资料
+                                    </span>
+                                </div>
+
+                                <!-- 思考内容 (打字机效果的目标位置) -->
+                                <div class="text-sm text-slate-600 leading-relaxed font-mono whitespace-pre-wrap">
+                                    {{ step.details.summary || '准备中...' }}
+                                </div>
+
+                                <!-- 额外的反思摘要 (如果存在) -->
+                                <div v-if="step.details.step_summary" class="mt-2 text-xs text-slate-500 bg-slate-50 p-2 rounded border border-slate-100">
+                                    <strong class="text-indigo-500">结论:</strong> {{ step.details.step_summary }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                            <!-- 最终回答 -->
+                            <div class="prose prose-sm md:prose-base max-w-none text-slate-800">
+                                <div v-if="!msg.displayContent && loading && idx === messages.length - 1" class="flex gap-1 items-center h-6">
+                                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0s"></span>
+                                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                                    <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+                                </div>
+                                <div v-else v-html="renderMarkdown(msg.displayContent)"></div>
+                                <span v-if="loading && idx === messages.length - 1 && msg.displayContent !== msg.fullContent" class="typing-cursor"></span>
+                            </div>
+
+                            <!-- 底部工具栏 -->
+                            <div v-if="msg.fullContent" class="flex gap-3 pt-1">
+                                <button class="text-slate-400 hover:text-indigo-500 transition-colors" title="复制"><i class="ph ph-copy"></i></button>
+                                <button class="text-slate-400 hover:text-indigo-500 transition-colors" title="重新生成"><i class="ph ph-arrows-clockwise"></i></button>
+                                <button class="text-slate-400 hover:text-indigo-500 transition-colors" title="赞"><i class="ph ph-thumbs-up"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 底部输入区 (浮动式) -->
+        <div class="absolute bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent pb-6 pt-10 px-4">
+            <div class="max-w-3xl mx-auto relative bg-white rounded-2xl shadow-xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-50 transition-all">
+
+                <!-- 工具栏 (模仿通义) -->
+                <div v-if="inputMsg.length > 0" class="absolute -top-10 left-0 flex gap-2">
+                    <button class="bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-sm flex items-center gap-1 transition-colors">
+                        <i class="ph ph-globe"></i> 联网搜索
+                    </button>
+                    <button class="bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-sm flex items-center gap-1 transition-colors">
+                        <i class="ph ph-lightbulb"></i> 深度思考
+                    </button>
+                </div>
+
+                <textarea
+                    v-model="inputMsg"
+                    @keydown.enter.prevent="handleEnter"
+                    ref="textarea"
+                    rows="1"
+                    placeholder="问点什么... (Shift + Enter 换行)"
+                    :disabled="loading"
+                    class="w-full pl-4 pr-12 py-4 bg-transparent border-none focus:ring-0 outline-none resize-none max-h-40 overflow-y-auto text-slate-700 placeholder:text-slate-400"
+                    style="min-height: 56px;"
+                ></textarea>
+
+                <div class="absolute bottom-2 right-2 flex items-center gap-2">
+                    <!-- 附件图标 (装饰用) -->
+                    <button class="p-2 text-slate-400 hover:text-slate-600 transition-colors rounded-lg hover:bg-slate-100">
+                        <i class="ph ph-paperclip text-lg"></i>
+                    </button>
+
+                    <!-- 发送按钮 -->
+                    <button
+                        @click="sendMessage"
+                        :disabled="!inputMsg.trim() || loading"
+                        class="w-8 h-8 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-lg transition-all shadow-md">
+                        <i v-if="!loading" class="ph ph-arrow-up text-lg font-bold"></i>
+                        <i v-else class="ph ph-stop text-lg animate-pulse"></i>
+                    </button>
+                </div>
+            </div>
+            <p class="text-center text-[10px] text-slate-400 mt-2">内容由 AI 生成，请注意甄别。</p>
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+    const { createApp, ref, reactive, nextTick, watch, onMounted } = Vue;
+
+    // 配置 Marked
+    marked.setOptions({
+        highlight: function(code, lang) {
+            const language = highlight.getLanguage(lang) ? lang : 'plaintext';
+            return highlight.highlight(code, { language }).value;
+        },
+        langPrefix: 'hljs language-'
+    });
+
+    createApp({
+        setup() {
+            // --- 状态定义 ---
+            const inputMsg = ref("");
+            const messages = ref([]);
+            const loading = ref(false);
+            const chatBox = ref(null);
+            const textarea = ref(null);
+            const currentStatus = ref("");
+            const isSidebarOpen = ref(true);
+
+            // 历史记录相关
+            const historySessions = ref([]);
+            const currentSessionId = ref(null);
+
+            // 快捷建议
+            const suggestions = [
+                { title: 'Meta 裁员分析', desc: '最新的裁员动向及影响', icon: 'ph-users', text: 'Meta 最近的裁员情况如何？对行业有什么影响？' },
+                { title: 'LangChain 学习', desc: 'LCEL 核心概念详解', icon: 'ph-code', text: '详细解释 LangChain 的 LCEL 是什么，与传统链的区别？' },
+                { title: 'AI 趋势', desc: '2025 年技术展望', icon: 'ph-trend-up', text: '2025年 AI Agent 的主要发展趋势是什么？' },
+                { title: '代码除错', desc: 'Python 异步编程', icon: 'ph-bug', text: 'Python asyncio 的常见陷阱有哪些？' },
+            ];
+
+            // --- 生命周期 ---
+            onMounted(() => {
+                const saved = localStorage.getItem('deepthink_sessions');
+                if (saved) {
+                    historySessions.value = JSON.parse(saved);
+                }
+                if (window.innerWidth < 768) {
+                    isSidebarOpen.value = false;
+                }
+            });
+
+            // --- 辅助函数 ---
+            const formatTime = (ts) => dayjs(ts).format('MM-DD HH:mm');
+
+            const autoResizeTextarea = () => {
+                if(textarea.value) {
+                    textarea.value.style.height = 'auto';
+                    textarea.value.style.height = textarea.value.scrollHeight + 'px';
+                }
+            };
+            watch(inputMsg, autoResizeTextarea);
+
+            const scrollToBottom = () => {
+                nextTick(() => {
+                    if (chatBox.value) chatBox.value.scrollTo({ top: chatBox.value.scrollHeight, behavior: 'smooth' });
+                });
+            };
+
+            // 在 script setup 中找到这两行并替换
+
+             const formatNodeName = (node) => ({
+                'router': '意图',
+                'instant_rag': '速查', // New
+                'simple_gen': '回答',  // New
+                'plan': '规划',
+                'research_step': '检索',
+                'distill': '阅读',
+                'reflect': '反思',
+                'generate_final_answer': '生成'
+            }[node] || node);
+
+            const getNodeColor = (node) => ({
+                'router': 'bg-pink-500',
+                'instant_rag': 'bg-cyan-500', // New
+                'simple_gen': 'bg-green-500', // New
+                'plan': 'bg-purple-500',
+                'research_step': 'bg-blue-500',
+                'distill': 'bg-amber-500',
+                'reflect': 'bg-teal-500',
+                'generate_final_answer': 'bg-green-500'
+            }[node] || 'bg-gray-400');
+            // --- 历史记录逻辑 ---
+            const saveSessionsToLocal = () => {
+                localStorage.setItem('deepthink_sessions', JSON.stringify(historySessions.value));
+            };
+
+            const startNewChat = () => {
+                currentSessionId.value = null;
+                messages.value = [];
+                inputMsg.value = "";
+                if (window.innerWidth < 768) isSidebarOpen.value = false;
+            };
+
+            const loadSession = (id) => {
+                const session = historySessions.value.find(s => s.id === id);
+                if (session) {
+                    currentSessionId.value = id;
+                    messages.value = session.messages;
+                    if (window.innerWidth < 768) isSidebarOpen.value = false;
+                }
+            };
+
+            const deleteSession = (id) => {
+                historySessions.value = historySessions.value.filter(s => s.id !== id);
+                saveSessionsToLocal();
+                if (currentSessionId.value === id) startNewChat();
+            };
+
+            const updateCurrentSession = () => {
+                if (!currentSessionId.value) {
+                    const newId = Date.now().toString();
+                    const title = messages.value[0]?.content.slice(0, 20) || '新对话';
+                    const newSession = { id: newId, title, timestamp: Date.now(), messages: messages.value };
+                    historySessions.value.unshift(newSession);
+                    currentSessionId.value = newId;
+                } else {
+                    const idx = historySessions.value.findIndex(s => s.id === currentSessionId.value);
+                    if (idx !== -1) {
+                        historySessions.value[idx].messages = messages.value;
+                        historySessions.value[idx].timestamp = Date.now();
+                        const session = historySessions.value.splice(idx, 1)[0];
+                        historySessions.value.unshift(session);
+                    }
+                }
+                saveSessionsToLocal();
+            };
+
+            // --- Markdown 渲染 ---
+            const renderMarkdown = (text) => {
+                if (!text) return "";
+                let processed = text.replace(/\[来源:(\d+(?:,\s*\d+)*)\]/g, (match, ids) => {
+                    return `<sup class="ml-0.5 text-indigo-500 cursor-pointer hover:underline font-mono" title="来源: ${ids}">[${ids}]</sup>`;
+                });
+                let html = marked.parse(processed);
+                return DOMPurify.sanitize(html);
+            };
+
+            // --- 通用打字机效果 (核心修改) ---
+            const typeWriterEffect = async (text, targetObj, field) => {
+                if (!text) return;
+
+                const speed = 10;
+                const stepSize = 3; // 每次显示几个字，调大此值可加快速度
+                let currentIdx = 0;
+
+                // 确保初始为空
+                targetObj[field] = "";
+
+                return new Promise(resolve => {
+                    const interval = setInterval(() => {
+                        if (currentIdx >= text.length) {
+                            targetObj[field] = text; // 确保完整
+                            clearInterval(interval);
+                            resolve();
+                            return;
+                        }
+                        targetObj[field] += text.slice(currentIdx, currentIdx + stepSize);
+                        currentIdx += stepSize;
+                        scrollToBottom(); // 边打字边滚动
+                    }, speed);
+                });
+            };
+
+            // --- 发送消息逻辑 ---
+            const setInput = (text) => { inputMsg.value = text; textarea.value.focus(); };
+            const handleEnter = (e) => { if(!e.shiftKey) sendMessage(); };
+
+            const sendMessage = async () => {
+                if (!inputMsg.value.trim() || loading.value) return;
+
+                const query = inputMsg.value;
+                inputMsg.value = "";
+                if(textarea.value) textarea.value.style.height = '56px';
+
+                loading.value = true;
+                currentStatus.value = "初始化引擎...";
+
+                // 添加用户消息
+                messages.value.push({ role: 'user', content: query });
+
+                // 添加 AI 初始占位消息
+                const aiMsg = reactive({
+                    role: 'ai',
+                    fullContent: '',      // 完整内容存储
+                    displayContent: '',   // 用于打字机显示的最终内容
+                    thoughts: [],         // 思考链数组
+                    isThinkingExpanded: true // 默认展开思考
+                });
+                messages.value.push(aiMsg);
+                scrollToBottom();
+                updateCurrentSession();
+
+                try {
+                    const response = await fetch('http://localhost:8000/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: query })
+                    });
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = "";
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            if (line.startsWith('event:')) {
+                                const [evtLine, dataLine] = line.split('\n');
+                                const eventType = evtLine.replace('event:', '').trim();
+                                const dataStr = dataLine ? dataLine.replace('data:', '').trim() : '';
+
+                                if (eventType === 'done') break;
+                                if (eventType === 'error') {
+                                    aiMsg.displayContent = `❌ 错误: ${JSON.parse(dataStr)}`;
+                                    break;
+                                }
+
+                                try {
+                                    const data = JSON.parse(dataStr);
+
+                                    // === 核心逻辑修改：思考过程的流式处理 ===
+                                    if (eventType === 'process') {
+                                        // 1. 获取完整的文本内容 (后端一次性发来的)
+                                        const summaryText = data.details.summary || "";
+                                        const stepSummaryText = data.details.step_summary || "";
+
+                                        // 2. 创建一个初始状态的 thought 对象（文本先置空，等待打字）
+                                        const newThought = reactive({
+                                            node: data.node,
+                                            details: {
+                                                ...data.details,
+                                                summary: "",       // 初始空
+                                                step_summary: ""   // 初始空
+                                            }
+                                        });
+
+                                        // 3. 立即推入数组，让 UI 渲染出边框
+                                        aiMsg.thoughts.push(newThought);
+                                        currentStatus.value = `正在${formatNodeName(data.node)}...`;
+                                        scrollToBottom();
+
+                                        // 4. 对 summary 字段执行打字机效果
+                                        if (summaryText) {
+                                            await typeWriterEffect(summaryText, newThought.details, 'summary');
+                                        }
+
+                                        // 5. 如果有 step_summary (Reflect节点)，也执行打字机
+                                        if (stepSummaryText) {
+                                            await typeWriterEffect(stepSummaryText, newThought.details, 'step_summary');
+                                        }
+
+                                    }
+                                      else if (eventType === 'answer_chunk') {
+                                        currentStatus.value = "生成回答...";
+                                        // 不再需要打字机，直接拼接
+                                        aiMsg.fullContent += data;
+                                        aiMsg.displayContent = aiMsg.fullContent; // 直接更新显示内容
+                                        scrollToBottom(); // 实时滚动
+                                    }
+                                    // === 新增逻辑：处理引用 ===
+                                    else if (eventType === 'answer_citations') {
+                                        aiMsg.fullContent += data;
+                                        aiMsg.displayContent = aiMsg.fullContent;
+                                        updateCurrentSession();
+                                        scrollToBottom();
+                                    }
+                                } catch (e) { console.error("解析错误:", e); }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    aiMsg.displayContent = `⚠️ 网络错误: ${error.message}`;
+                } finally {
+                    loading.value = false;
+                    currentStatus.value = "";
+                }
+            };
+
+            return {
+                inputMsg, messages, loading, chatBox, textarea, currentStatus, isSidebarOpen,
+                historySessions, currentSessionId, suggestions,
+                startNewChat, loadSession, deleteSession, formatTime,
+                setInput, handleEnter, sendMessage,
+                renderMarkdown, formatNodeName, getNodeColor
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
