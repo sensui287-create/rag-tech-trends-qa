@@ -64,7 +64,6 @@ TechPulse-RAG/
 │   └── measure_performance.py    # Manual SSE performance measurement
 ├── examples/data/                # Public synthetic demo corpus
 ├── tests/                        # Regression tests without live models
-├── .github/                      # CI, issue templates, and PR template
 ├── .env.example                  # Configuration template with placeholders only
 ├── requirements.txt              # Service runtime dependencies
 ├── requirements-dev.txt          # Lightweight offline test dependencies
@@ -163,7 +162,7 @@ python -m unittest discover -s tests -v
 python -m pyflakes backend experiments tests
 ```
 
-Tests cover path configuration, experiment input and output, frontend SSE decoding, and HTTP/SSE behavior with a fake backend. CI runs the same offline checks. **These checks do not validate live model calls, retrieval quality, or experiment metrics.**
+Tests cover path configuration, experiment input and output, frontend SSE decoding, and HTTP/SSE behavior with a fake backend. **These offline checks do not validate live model calls, retrieval quality, or experiment metrics.**
 
 After installing `requirements.txt`, experiment tools additionally need `openai>=1.50,<3`, `requests>=2.32,<3`, `tqdm>=4.66,<5`, `tabulate>=0.9,<1`, and `httpx>=0.27,<1`. Run `python -m experiments.<module> --help` from the repository root to see each command's options. `agent_experiment` generates answers, and `agent_results` judges them. You must provide the experiment data and results yourself; the synthetic examples cannot reproduce the original experiment numbers.
 

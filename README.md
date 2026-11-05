@@ -64,7 +64,6 @@ TechPulse-RAG/
 │   └── measure_performance.py    # SSE 性能手动测量
 ├── examples/data/                # 可公开的合成演示语料
 ├── tests/                        # 无需真实模型的回归测试
-├── .github/                      # CI、issue 和 PR 模板
 ├── .env.example                  # 仅含占位符的配置模板
 ├── requirements.txt              # 服务运行依赖
 ├── requirements-dev.txt          # 轻量离线测试依赖
@@ -163,7 +162,7 @@ python -m unittest discover -s tests -v
 python -m pyflakes backend experiments tests
 ```
 
-测试覆盖路径配置、实验输入输出、前端 SSE 解码以及使用替身后端的 HTTP/SSE 行为。CI 运行同样的离线检查，**不验证真实模型调用、检索质量或实验指标**。
+测试覆盖路径配置、实验输入输出、前端 SSE 解码以及使用替身后端的 HTTP/SSE 行为。这些离线检查**不验证真实模型调用、检索质量或实验指标**。
 
 实验工具在安装 `requirements.txt` 后，还需安装 `openai>=1.50,<3`、`requests>=2.32,<3`、`tqdm>=4.66,<5`、`tabulate>=0.9,<1` 和 `httpx>=0.27,<1`。统一从项目根目录使用 `python -m experiments.<模块名> --help` 查看参数；答案生成见 `agent_experiment`，模型裁判见 `agent_results`。实验数据和结果须自行准备；仓库内的合成示例不能复现原实验数字。
 
