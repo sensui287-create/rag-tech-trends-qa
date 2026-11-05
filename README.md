@@ -4,7 +4,7 @@
 
 [English](README.en.md) · [安装与使用](#快速开始) · [验证与实验](#验证与实验)
 
-LongChain 将 FastAPI、LangGraph、Ollama 嵌入、Chroma 向量检索、BM25 和交叉编码器重排组合成一个本地问答演示。简单问题走单次检索，复杂问题经过规划、候选资料召回、逐步重排、信息提炼与反思，最后输出带来源编号的回答。
+TechPulse-RAG 将 FastAPI、LangGraph、Ollama 嵌入、Chroma 向量检索、BM25 和交叉编码器重排组合成一个本地问答演示。简单问题走单次检索，复杂问题经过规划、候选资料召回、逐步重排、信息提炼与反思，最后输出带来源编号的回答。
 
 本项目与 LangChain 官方项目无隶属关系。目前是研究原型，尚未提供完整的真实模型端到端验证和可复现实验基准。
 
@@ -79,7 +79,7 @@ TechPulse-RAG/
 
 推荐 Python **3.11**，以及 Git、可运行的 [Ollama](https://ollama.com/) 服务和一个可调用所选通义模型的 DashScope 账户。CPU 可运行重排器；实际速度和内存需求取决于模型、设备与语料规模。
 
-将仓库克隆或将源码包解压后，进入包含本 README 的目录。Windows PowerShell：
+将仓库克隆后，进入包含本 README 的目录。Windows PowerShell：
 
 ```powershell
 python -m venv .venv
