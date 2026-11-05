@@ -26,9 +26,7 @@ jobs:
           node-version: '22'
       - name: Install lightweight check dependencies
         run: python -m pip install -r requirements-dev.txt
-      - name: Validate publication files
-        run: python scripts/check_repository.py
       - name: Run offline regression tests
         run: python -m unittest discover -s tests -v
       - name: Check active Python names and imports
-        run: python -m pyflakes backend experiments scripts tests
+        run: python -m pyflakes backend experiments tests

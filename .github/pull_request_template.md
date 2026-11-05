@@ -4,8 +4,8 @@
 
 ## 验证
 
-- [ ] `python scripts/check_repository.py`
 - [ ] `python -m unittest discover -s tests -v`
+- [ ] `python -m pyflakes backend experiments tests`
 
 补充相关验证命令及结果。未执行的检查请说明原因；涉及模型/API、数据处理或实验的改动，请记录所用环境、模型、数据来源与必要配置。不要在通用检查中自动执行 `backend/test_*.py`。
 

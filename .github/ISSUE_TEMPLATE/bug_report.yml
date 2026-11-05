@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        感谢报告问题。请先查看 README 和现有 issue；安全问题请遵循 SECURITY.md，勿公开漏洞细节、密钥、个人信息或未脱敏数据。
+        感谢报告问题。请先查看 README 和现有 issue；请勿公开漏洞细节、密钥、个人信息或未脱敏数据。
   - type: textarea
     id: description
     attributes:

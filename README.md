@@ -2,11 +2,11 @@
 
 **基于 LangGraph 的多智能体 RAG 研究原型，支持问题路由、分步研究和带来源引用的流式回答。**
 
-[English](README.en.md) · [安装与使用](#快速开始) · [API](docs/API.md) · [实验脚本](docs/EXPERIMENTS.md) · [归档清单](docs/ARCHIVE.md) · [发布到 GitHub](docs/PUBLISHING.md)
+[English](README.en.md) · [安装与使用](#快速开始) · [验证与实验](#验证与实验)
 
 LongChain 将 FastAPI、LangGraph、Ollama 嵌入、Chroma 向量检索、BM25 和交叉编码器重排组合成一个本地问答演示。简单问题走单次检索，复杂问题经过规划、候选资料召回、逐步重排、信息提炼与反思，最后输出带来源编号的回答。
 
-项目名称沿用原文件夹名称；本项目与 LangChain 官方项目无隶属关系。目前是研究原型，尚未提供完整的真实模型端到端验证和可复现实验基准。
+本项目与 LangChain 官方项目无隶属关系。目前是研究原型，尚未提供完整的真实模型端到端验证和可复现实验基准。
 
 ## 功能与实现范围
 
@@ -21,7 +21,7 @@ LongChain 将 FastAPI、LangGraph、Ollama 嵌入、Chroma 向量检索、BM25 �
 | 流式回答 | FastAPI 通过 SSE 返回过程事件、文本片段和来源元数据 |
 | 浏览器演示 | Vue 页面展示对话、研究过程和来源；会话存储于浏览器本地 |
 
-默认问答流程使用本地语料，不执行实时网页搜索。历史脚本中的检索权重、实体或时间展示字段不代表当前已实现相应动态检索策略。
+默认问答流程使用本地语料，不执行实时网页搜索。检索权重、实体或时间展示字段不代表当前已实现相应动态检索策略。
 
 ## 工作流程
 
@@ -44,10 +44,10 @@ flowchart TD
 ## 项目结构
 
 ```text
-LongChain/
+TechPulse-RAG/
 ├── backend/
 │   ├── server.py                 # FastAPI、网页入口和 SSE 接口
-│   ├── index.html                # 推荐使用的浏览器演示
+│   ├── index.html                # 浏览器演示
 │   ├── rag_core/
 │   │   ├── config.py             # 环境变量和项目相对路径
 │   │   ├── graph.py              # LangGraph 工作流
@@ -62,21 +62,16 @@ LongChain/
 │   ├── generate_qa_dataset.py    # 单文档检索评测集生成
 │   ├── generate_multihop_dataset.py # 多跳问答生成
 │   └── measure_performance.py    # SSE 性能手动测量
-├── archive/                      # 历史代码，保留供研究查阅
-│   ├── frontend/                # 两个旧版浏览器界面
-│   ├── analysis/                # 旧答案比较与固定分数绘图
-│   └── rag_core_monolithic.py   # 旧单文件实现，非推荐入口
 ├── examples/data/                # 可公开的合成演示语料
-├── docs/                         # 说明、逐代码文件审阅清单和验证记录
-├── scripts/                      # 发布检查与带校验清单的 ZIP 打包
 ├── tests/                        # 无需真实模型的回归测试
 ├── .github/                      # CI、issue 和 PR 模板
 ├── .env.example                  # 仅含占位符的配置模板
-├── requirements*.txt             # 运行、研究和轻量测试依赖
+├── requirements.txt              # 服务运行依赖
+├── requirements-dev.txt          # 轻量离线测试依赖
 └── LICENSE                       # MIT
 ```
 
-原始新闻 CSV、实验 JSON/图表、本地模型、Chroma 数据库、BM25 缓存和真实 `.env` 不随源码分发。完整说明见 [数据与第三方资源](docs/THIRD_PARTY.md)。
+原始新闻 CSV、实验 JSON/图表、本地模型、Chroma 数据库、BM25 缓存和真实 `.env` 不随源码分发。示例数据为合成内容；第三方模型、软件和原始语料遵循各自许可。
 
 ## 快速开始
 
@@ -164,24 +159,24 @@ python -m uvicorn backend.server:app --host 127.0.0.1 --port 8000
 
 ```bash
 python -m pip install -r requirements-dev.txt
-python scripts/check_repository.py
 python -m unittest discover -s tests -v
+python -m pyflakes backend experiments tests
 ```
 
-检查涵盖发布文件集、逐代码文件审阅清单及哈希、敏感信息模式、Python 语法、路径配置和使用替身后端的 HTTP/SSE 行为。CI 运行同样的离线检查，**不验证真实模型调用、检索质量或实验指标**。归档范围与保留原因见 [归档说明](docs/ARCHIVE.md)，实际验证范围见 [验证记录](docs/VALIDATION.md)。
+测试覆盖路径配置、实验输入输出、前端 SSE 解码以及使用替身后端的 HTTP/SSE 行为。CI 运行同样的离线检查，**不验证真实模型调用、检索质量或实验指标**。
 
-实验工具需另装 `requirements-research.txt`，并按 [实验说明](docs/EXPERIMENTS.md) 准备数据。统一从项目根目录使用 `python -m experiments.<模块名>`，可先加 `--help` 查看参数。仅将 `tests/` 作为离线测试集。仓库不随附原始研究数据和结果，不能直接复现原实验数字。
+实验工具在安装 `requirements.txt` 后，还需安装 `openai>=1.50,<3`、`requests>=2.32,<3`、`tqdm>=4.66,<5`、`tabulate>=0.9,<1` 和 `httpx>=0.27,<1`。统一从项目根目录使用 `python -m experiments.<模块名> --help` 查看参数；答案生成见 `agent_experiment`，模型裁判见 `agent_results`。实验数据和结果须自行准备；仓库内的合成示例不能复现原实验数字。
 
 ## 当前限制
 
 - 主工作流尚未把英文检索器融合到默认召回中，也没有实现联网搜索。
-- 历史评测脚本、旧界面和归档代码不等同于受支持的服务入口。
+- 实验脚本需要额外依赖、数据和模型服务；默认服务入口是 `backend.server:app`。
 - 模型 JSON 输出可能不符合结构要求；空研究计划会被校验拒绝，尚无全面的重试与恢复机制。
 - 当前服务没有用户鉴权、速率限制或会话隔离配额，按本地演示使用。
 - 答案带来源标记不保证内容完全准确，应核对检索原文。
 
 ## 贡献与许可
 
-欢迎通过 issue 和 pull request 改进项目；请先阅读 [贡献指南](CONTRIBUTING.md)。安全问题按 [安全政策](SECURITY.md) 私密报告。
+欢迎通过 issue 和 pull request 改进项目。请勿在公开 issue 中提交密钥、私有语料或其他敏感信息。
 
-项目原创源码、文档和合成示例采用 [MIT License](LICENSE)。第三方模型、软件和原始新闻语料不因本项目的许可证而变更授权，详见 [第三方资源说明](docs/THIRD_PARTY.md)。
+项目原创源码和合成示例采用 [MIT License](LICENSE)。第三方模型、软件和原始新闻语料不因本项目的许可证而变更授权。

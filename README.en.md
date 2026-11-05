@@ -1,6 +1,6 @@
 # 🚀 TechPulse-RAG: A RAG-Powered Intelligent Q&A System for Tech Trends
 
-[中文文档](README.md) · [API](docs/API.md) · [Experiments](docs/EXPERIMENTS.md) · [Archive inventory](docs/ARCHIVE.md) · [Publishing](docs/PUBLISHING.md)
+[中文文档](README.md) · [Quick start](#quick-start) · [Verification](#verification)
 
 A research prototype for agentic retrieval-augmented generation, built with LangGraph and FastAPI. It routes simple questions to a retrieval path and complex questions to planning, candidate retrieval, reranking, distillation and reflection. Responses and source metadata are streamed to a browser through SSE.
 
@@ -30,17 +30,16 @@ Data/index paths resolve from the repository root. Shell environment variables t
 
 ```bash
 python -m pip install -r requirements-dev.txt
-python scripts/check_repository.py
 python -m unittest discover -s tests -v
-python scripts/prepare_release.py
+python -m pyflakes backend experiments tests
 ```
 
-These checks cover publication files, reviewed-code hashes, credential patterns, Python syntax, configuration and HTTP/SSE behavior with a fake backend. They do not validate live models or benchmark results. Runtime requirements use version ranges rather than a fully tested inference lockfile. Experiments live in `experiments/` and run from the repository root using `python -m experiments.<module>`; consult the Chinese [experiment notes](docs/EXPERIMENTS.md). Only `tests/` contains the offline test suite. See the [validation record](docs/VALIDATION.md) for the tested scope.
+These tests cover configuration, experiment input and output, frontend SSE decoding, and HTTP/SSE behavior with a fake backend. They do not validate live models or benchmark results. Runtime requirements use version ranges rather than a fully tested inference lockfile. Experiments run from the repository root with `python -m experiments.<module> --help`. They require `requirements.txt` plus `openai>=1.50,<3`, `requests>=2.32,<3`, `tqdm>=4.66,<5`, `tabulate>=0.9,<1` and `httpx>=0.27,<1`.
 
-The archive is written to `dist/LongChain-github.zip`, with a per-file manifest and a ZIP SHA-256 sidecar. Original corpora, private configuration, model weights, retrieval databases, caches and experimental results are excluded; original local resources remain on disk. Extract the archive and upload its source files, rather than uploading the ZIP as the repository contents. Historical interfaces and analysis scripts are separated under `archive/`; its contents are reference material rather than supported service entry points.
+Original corpora, private configuration, model weights, retrieval databases, caches and experimental results are excluded from this repository. Synthetic sample data is included for a basic workflow check. It cannot reproduce the original experiment results.
 
 ## Limitations and contributing
 
-This is a local research demo without authentication or request quotas. Some historical experiment scripts need adaptation, and the original experiments cannot be reproduced from the included synthetic data. Structured model output can fail validation, and generated citations do not guarantee factual correctness.
+This is a local research demo without authentication or request quotas. Experimental commands need additional dependencies, data and model services. Structured model output can fail validation, and generated citations do not guarantee factual correctness.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Original project code, documentation and synthetic samples are available under the [MIT License](LICENSE). Third-party models, libraries and original corpora retain their own terms; see [THIRD_PARTY.md](docs/THIRD_PARTY.md).
+Contributions are welcome through issues and pull requests. Do not post credentials or private data in public issues. Original project code and synthetic samples are available under the [MIT License](LICENSE). Third-party models, libraries and original corpora retain their own terms.
