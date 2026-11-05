@@ -1,4 +1,4 @@
-# LongChain
+# 🚀 TechPulse-RAG: 基于 RAG 的科技动向信息智能问答系统
 
 **基于 LangGraph 的多智能体 RAG 研究原型，支持问题路由、分步研究和带来源引用的流式回答。**
 
